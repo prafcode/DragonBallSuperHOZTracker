@@ -5,18 +5,24 @@ import gohan from '../data/copies/gohan.json'
 import broly from '../data/copies/broly.json'
 import bardock from '../data/copies/bardock.json'
 import type { CardInfo, CardSlug, FoundCopy, Sale, Slot } from '../types'
+import { photosFor } from './photos'
 
 export const PRINT_RUN = 100
 
 export const CARDS = cardsJson as CardInfo[]
 
-const COPIES: Record<CardSlug, FoundCopy[]> = {
-  goku,
-  vegeta,
-  gohan,
-  broly,
-  bardock,
-} as Record<CardSlug, FoundCopy[]>
+const RAW = { goku, vegeta, gohan, broly, bardock } as Record<CardSlug, FoundCopy[]>
+
+/**
+ * Copy data with photos attached: uploaded files from src/photos come first,
+ * then any external URLs listed in the JSON "images" field.
+ */
+const COPIES = Object.fromEntries(
+  Object.entries(RAW).map(([slug, copies]) => [
+    slug,
+    copies.map((c) => ({ ...c, images: [...photosFor(slug, c.serial), ...(c.images ?? [])] })),
+  ]),
+) as Record<CardSlug, FoundCopy[]>
 
 export function getCard(slug: string): CardInfo | undefined {
   return CARDS.find((c) => c.slug === slug)
