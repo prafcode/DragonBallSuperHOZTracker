@@ -1,0 +1,7 @@
+[
+  { "slug": "goku", "number": "BT27-019", "name": "Son Goku, Unlimited Potential", "character": "Goku", "accent": "#f97316" },
+  { "slug": "vegeta", "number": "BT27-039", "name": "SSB Vegeta, Power of Conviction", "character": "Vegeta", "accent": "#3b82f6" },
+  { "slug": "gohan", "number": "BT27-059", "name": "SS2 Son Gohan, Sadness and Rage", "character": "Gohan", "accent": "#eab308" },
+  { "slug": "broly", "number": "BT27-084", "name": "SS Broly, Vigor", "character": "Broly", "accent": "#22c55e" },
+  { "slug": "bardock", "number": "BT27-095", "name": "Bardock, Destiny-Changing Willpower", "character": "Bardock", "accent": "#ef4444" }
+]

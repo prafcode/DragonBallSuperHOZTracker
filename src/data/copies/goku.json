@@ -1,0 +1,18 @@
+[
+  {
+    "serial": 44,
+    "foundBy": "Example Collector",
+    "foundDate": "2025-08-02",
+    "source": "https://www.pricecharting.com/game/dragon-ball-super-history-of-z/son-goku-unlimited-potential-serial-bt27-019",
+    "sales": [{ "price": 23000, "date": "2025-09-01", "grade": "BGS 10" }],
+    "grades": [{ "company": "BGS", "grade": "10", "date": "2025-08-20" }],
+    "notes": "SAMPLE ENTRY — replace with verified data."
+  },
+  {
+    "serial": 7,
+    "foundBy": "Example Shop",
+    "foundDate": "2025-07-12",
+    "sales": [{ "price": 4800, "date": "2025-07-20" }],
+    "notes": "SAMPLE ENTRY — replace with verified data."
+  }
+]

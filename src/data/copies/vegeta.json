@@ -1,0 +1,9 @@
+[
+  {
+    "serial": 61,
+    "foundBy": "Example Collector",
+    "foundDate": "2025-07-28",
+    "sales": [{ "price": 7700, "date": "2025-08-04" }],
+    "notes": "SAMPLE ENTRY — replace with verified data."
+  }
+]

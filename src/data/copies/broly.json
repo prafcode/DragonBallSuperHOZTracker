@@ -1,0 +1,9 @@
+[
+  {
+    "serial": 27,
+    "foundBy": "Example Collector",
+    "foundDate": "2025-08-15",
+    "grades": [{ "company": "PSA", "grade": "10", "date": "2025-09-10" }],
+    "notes": "SAMPLE ENTRY — replace with verified data."
+  }
+]
