@@ -46,13 +46,13 @@ All the data lives in `src/data/copies/<card>.json` (`goku`, `vegeta`, `gohan`, 
 Commit and push to `main`, and Cloudflare Pages redeploys the site in about a minute.
 You can also edit the JSON directly on github.com.
 
-## Deploy (Cloudflare Pages)
+## Deploy (Cloudflare Workers, free plan)
 
-1. In the Cloudflare dashboard, go to Workers & Pages → Create → Pages → Connect to Git, and pick this repository.
-2. Build settings:
-   - Framework preset: Vite
-   - Build command: `npm run build`
-   - Output directory: `dist`
-3. Add the environment variable `NODE_VERSION` = `24`.
+The site is connected through Workers & Pages → Create → Import a repository. It uses these settings:
 
-`public/_redirects` makes sure that links straight to `/card/...` and `/stats` load the app instead of a 404 page.
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+
+The deploy uses `wrangler.jsonc`, which uploads `dist/` as static files. Its
+`not_found_handling: "single-page-application"` setting makes links straight to `/card/...` and `/stats` load the app instead of a 404 page.
+The `name` in `wrangler.jsonc` has to match the project name in Cloudflare.
