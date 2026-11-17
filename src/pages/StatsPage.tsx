@@ -75,7 +75,7 @@ export default function StatsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-4xl tracking-wide text-orange-400">History of Z Statistics</h1>
+      <h1 className="text-xl font-semibold tracking-tight text-white">Statistics</h1>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile label="Cards found" value={`${found.length}/${CARDS.length * PRINT_RUN}`}
@@ -89,13 +89,13 @@ export default function StatsPage() {
       <Panel title="Card by card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wider text-zinc-500">
+            <thead className="text-left text-xs text-neutral-500">
               <tr><th className="py-1">Card</th><th>Found</th><th>Median sale</th><th>Top sale</th></tr>
             </thead>
             <tbody>
               {perCard.map((c) => (
-                <tr key={c.name} className="border-t border-white/5">
-                  <td className="py-2 font-semibold" style={{ color: c.accent }}>{c.name}</td>
+                <tr key={c.name} className="border-t border-neutral-800">
+                  <td className="py-2 font-medium text-white">{c.name}</td>
                   <td>{c.found}/{PRINT_RUN}</td>
                   <td>{c.median ? usd(c.median) : '—'}</td>
                   <td>{c.top ? usd(c.top) : '—'}</td>
@@ -104,7 +104,7 @@ export default function StatsPage() {
             </tbody>
           </table>
         </div>
-        <Chart data={perCard.map((c) => ({ name: c.name, value: c.found }))} colors={perCard.map((c) => c.accent)} />
+        <Chart data={perCard.map((c) => ({ name: c.name, value: c.found }))} />
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -131,7 +131,7 @@ export default function StatsPage() {
 const slotRow = (s: Slot, right: string) => ({
   key: s.card.slug + s.serial,
   left: (
-    <Link to={`/card/${s.card.slug}/${s.serial}`} className="hover:underline" style={{ color: s.card.accent }}>
+    <Link to={`/card/${s.card.slug}/${s.serial}`} className="text-neutral-200 hover:underline">
       {s.card.character} #{pad(s.serial)}
     </Link>
   ),
@@ -140,25 +140,25 @@ const slotRow = (s: Slot, right: string) => ({
 
 function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[.03] p-4">
-      <div className="text-xs uppercase tracking-wider text-zinc-500">{label}</div>
-      <div className="mt-1 text-2xl font-extrabold">{value}</div>
-      <div className="text-xs text-zinc-400">{sub}</div>
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
+      <div className="text-xs text-neutral-500">{label}</div>
+      <div className="mt-1 font-mono text-2xl font-medium text-white">{value}</div>
+      <div className="text-xs text-neutral-400">{sub}</div>
     </div>
   )
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-white/10 bg-white/[.03] p-4">
-      <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-zinc-400">{title}</h2>
+    <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
+      <h2 className="mb-3 text-sm font-bold text-neutral-400">{title}</h2>
       {children}
     </section>
   )
 }
 
 function Chart({ data, colors }: { data: { name: string; value: number }[]; colors?: string[] }) {
-  if (!data.length) return <p className="text-sm text-zinc-500">No data yet.</p>
+  if (!data.length) return <p className="text-sm text-neutral-500">No data yet.</p>
   return (
     <div className="mt-2 h-48">
       <ResponsiveContainer width="100%" height="100%">
@@ -172,7 +172,7 @@ function Chart({ data, colors }: { data: { name: string; value: number }[]; colo
           />
           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
             {data.map((d, i) => (
-              <Cell key={d.name} fill={colors?.[i] ?? '#f97316'} />
+              <Cell key={d.name} fill={colors?.[i] ?? '#e5e5e5'} />
             ))}
           </Bar>
         </BarChart>
@@ -182,13 +182,13 @@ function Chart({ data, colors }: { data: { name: string; value: number }[]; colo
 }
 
 function List({ items }: { items: { key: string; left: React.ReactNode; right: string }[] }) {
-  if (!items.length) return <p className="text-sm text-zinc-500">No data yet.</p>
+  if (!items.length) return <p className="text-sm text-neutral-500">No data yet.</p>
   return (
     <ol className="space-y-1 text-sm">
       {items.map((it, i) => (
         <li key={it.key} className="flex justify-between gap-2">
-          <span className="truncate"><span className="text-zinc-500">{i + 1}.</span> {it.left}</span>
-          <span className="shrink-0 text-zinc-400">{it.right}</span>
+          <span className="truncate"><span className="text-neutral-500">{i + 1}.</span> {it.left}</span>
+          <span className="shrink-0 text-neutral-400">{it.right}</span>
         </li>
       ))}
     </ol>

@@ -1,19 +1,83 @@
-@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Bangers", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 html {
-  background: #0b0b12;
+  background: #0a0a0a;
   color-scheme: dark;
 }
 
 body {
-  @apply min-h-screen font-sans text-zinc-200;
-  background:
-    radial-gradient(1200px 500px at 50% -10%, rgba(249, 115, 22, 0.18), transparent 60%),
-    #0b0b12;
+  @apply min-h-screen bg-neutral-950 font-sans text-neutral-200 antialiased;
+}
+
+/*
+ * Foil card. The only colour in the UI.
+ * FoilCard.tsx sets --mx/--my (pointer position, 0–100%) and --rx/--ry (tilt, deg).
+ * Two layers sit over the photo: a rainbow band that slides with the pointer,
+ * and a white glare spot that follows it.
+ */
+.foil {
+  --mx: 50%;
+  --my: 50%;
+  --rx: 0deg;
+  --ry: 0deg;
+  position: relative;
+  isolation: isolate;
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.4s ease-out;
+  will-change: transform;
+}
+.foil[data-active='true'] {
+  transition: transform 0.08s linear;
+}
+.foil::before,
+.foil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.foil::before {
+  z-index: 1;
+  background: repeating-linear-gradient(
+    115deg,
+    #ff6b6b 0%, #ffd36b 6%, #7dffb2 12%, #6bd1ff 18%, #b28bff 24%, #ff6b6b 30%
+  );
+  background-size: 300% 300%;
+  background-position: var(--mx) var(--my);
+  mix-blend-mode: color-dodge;
+  opacity: 0.14;
+  transition: opacity 0.3s;
+}
+.foil::after {
+  z-index: 2;
+  background: radial-gradient(
+    circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.12) 25%,
+    transparent 55%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.foil[data-active='true']::before {
+  opacity: 0.3;
+}
+.foil[data-active='true']::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .foil,
+  .foil[data-active='true'] {
+    transform: none;
+    transition: none;
+  }
 }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 880" width="630" height="880">
+  <rect width="630" height="880" rx="28" fill="#1c1c1c"/>
+  <rect x="30" y="30" width="570" height="820" rx="18" fill="#2a2a2a" stroke="#555" stroke-width="4"/>
+  <rect x="60" y="120" width="510" height="420" rx="10" fill="#3a3a3a"/>
+  <circle cx="315" cy="330" r="120" fill="none" stroke="#777" stroke-width="10"/>
+  <text x="315" y="95" font-family="sans-serif" font-size="34" fill="#bbb" text-anchor="middle">SAMPLE PHOTO</text>
+  <text x="315" y="345" font-family="monospace" font-size="56" fill="#ddd" text-anchor="middle">044/100</text>
+  <rect x="60" y="580" width="510" height="22" rx="4" fill="#444"/>
+  <rect x="60" y="620" width="400" height="22" rx="4" fill="#444"/>
+  <rect x="60" y="660" width="460" height="22" rx="4" fill="#444"/>
+  <text x="315" y="800" font-family="sans-serif" font-size="26" fill="#888" text-anchor="middle">Replace with a real photo</text>
+</svg>
