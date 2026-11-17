@@ -6,7 +6,7 @@ interface Props {
   onChange: (slug: CardSlug) => void
 }
 
-/** Binder tabs: a vertical list on desktop, a horizontal scroller on phones. */
+/** Card tabs: a vertical list on desktop, a horizontal scroller on phones. */
 export default function CardSidebar({ active, onChange }: Props) {
   return (
     <nav

@@ -1,196 +1,267 @@
-import { Link } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
-import { CARDS, PRINT_RUN, foundCount, getAllFound, latestGrade, latestSale, pad, usd } from '../lib/copies'
+import { CARDS, PRINT_RUN, getAllFound, pad, usd } from '../lib/copies'
+import {
+  allSales,
+  filterSales,
+  gradingBreakdown,
+  lastSoldFor,
+  type Condition,
+  type SaleRow,
+} from '../lib/sales'
 import { useTitle } from '../lib/useTitle'
-import type { Slot } from '../types'
 
-const PRICE_BUCKETS: [string, number][] = [
-  ['< $2.5k', 2500],
-  ['$2.5k–5k', 5000],
-  ['$5k–10k', 10000],
-  ['$10k–20k', 20000],
-  ['$20k+', Infinity],
+const CONDITIONS: { value: Condition; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'raw', label: 'Raw' },
+  { value: 'graded', label: 'Graded' },
 ]
-
-const median = (xs: number[]) => {
-  if (!xs.length) return 0
-  const s = [...xs].sort((a, b) => a - b)
-  const m = Math.floor(s.length / 2)
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
-}
-
-const countBy = <T,>(xs: T[], key: (x: T) => string) =>
-  Object.entries(
-    xs.reduce<Record<string, number>>((acc, x) => {
-      const k = key(x)
-      acc[k] = (acc[k] ?? 0) + 1
-      return acc
-    }, {}),
-  ).map(([name, value]) => ({ name, value }))
 
 export default function StatsPage() {
   useTitle('Stats')
+  const [params, setParams] = useSearchParams()
+  const condition = (CONDITIONS.map((c) => c.value) as string[]).includes(params.get('sales') ?? '')
+    ? (params.get('sales') as Condition)
+    : 'all'
+  const setCondition = (c: Condition) => {
+    const next = new URLSearchParams(params)
+    if (c === 'all') next.delete('sales')
+    else next.set('sales', c)
+    setParams(next, { replace: true })
+  }
+
   const found = getAllFound()
-  const priced = found.filter((s) => latestSale(s.copy))
-  const prices = priced.map((s) => latestSale(s.copy)!.price)
-  const graded = found.filter((s) => latestGrade(s.copy))
-  const gradeNums = graded.map((s) => Number(latestGrade(s.copy)!.grade)).filter((n) => !Number.isNaN(n))
-
-  const perCard = CARDS.map((c) => {
-    const cardPrices = priced.filter((s) => s.card.slug === c.slug).map((s) => latestSale(s.copy)!.price)
-    return {
-      name: c.character,
-      accent: c.accent,
-      found: foundCount(c.slug),
-      median: median(cardPrices),
-      top: cardPrices.length ? Math.max(...cardPrices) : 0,
-    }
-  })
-
-  const priceDist = PRICE_BUCKETS.map(([name, max], i) => ({
-    name,
-    value: prices.filter((p) => p < max && p >= (i ? PRICE_BUCKETS[i - 1][1] : 0)).length,
-  }))
-  const companies = countBy(graded, (s) => latestGrade(s.copy)!.company.toUpperCase())
-  const timeline = countBy(
-    [...found].sort((a, b) => a.copy!.foundDate.localeCompare(b.copy!.foundDate)),
-    (s) => s.copy!.foundDate.slice(0, 7),
-  )
-  const finders = countBy(found, (s) => s.copy!.foundBy)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10)
-  const recent = [...found].sort((a, b) => b.copy!.foundDate.localeCompare(a.copy!.foundDate)).slice(0, 10)
-  const highest = [...priced]
-    .sort((a, b) => latestSale(b.copy)!.price - latestSale(a.copy)!.price)
-    .slice(0, 5)
+  const sales = allSales()
+  const shown = filterSales(sales, condition)
+  const lastRaw = sales.find((r) => !r.company)
+  const lastGraded = sales.find((r) => r.company)
+  const volume = sales.reduce((a, r) => a + r.sale.price, 0)
+  const { companies, raw, graded } = gradingBreakdown()
+  const maxCompany = Math.max(1, ...companies.map((c) => c.copies))
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight text-white">Statistics</h1>
+    <div className="space-y-8">
+      <h1 className="text-xl font-semibold tracking-tight text-white">Stats</h1>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile label="Cards found" value={`${found.length}/${CARDS.length * PRINT_RUN}`}
-          sub={`${((found.length / (CARDS.length * PRINT_RUN)) * 100).toFixed(1)}% complete`} />
-        <Tile label="Total value" value={usd(prices.reduce((a, b) => a + b, 0))} sub="Latest sale of each copy" />
-        <Tile label="Median sale" value={usd(median(prices))} sub={`${prices.length} copies with sales`} />
-        <Tile label="Graded" value={String(graded.length)}
-          sub={gradeNums.length ? `Avg grade ${(gradeNums.reduce((a, b) => a + b, 0) / gradeNums.length).toFixed(1)}` : '—'} />
+        <Tile label="Copies found" value={`${found.length} / ${CARDS.length * PRINT_RUN}`} sub={`${raw} raw · ${graded} graded`} />
+        <Tile label="Recorded sales" value={String(sales.length)} sub={`${usd(volume)} total volume`} />
+        <Tile label="Last raw sale" value={lastRaw ? usd(lastRaw.sale.price) : '—'} sub={lastRaw ? saleCaption(lastRaw) : 'No raw sales yet'} />
+        <Tile label="Last graded sale" value={lastGraded ? usd(lastGraded.sale.price) : '—'} sub={lastGraded ? saleCaption(lastGraded) : 'No graded sales yet'} />
       </div>
 
-      <Panel title="Card by card">
+      <Panel title="Last sold by card">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="text-left text-xs text-neutral-500">
-              <tr><th className="py-1">Card</th><th>Found</th><th>Median sale</th><th>Top sale</th></tr>
+              <tr>
+                <th className="pb-2 font-normal">Card</th>
+                <th className="pb-2 font-normal">Last raw</th>
+                <th className="pb-2 font-normal">Last graded</th>
+                <th className="pb-2 font-normal">Highest</th>
+                <th className="pb-2 text-right font-normal">Sales</th>
+              </tr>
             </thead>
             <tbody>
-              {perCard.map((c) => (
-                <tr key={c.name} className="border-t border-neutral-800">
-                  <td className="py-2 font-medium text-white">{c.name}</td>
-                  <td>{c.found}/{PRINT_RUN}</td>
-                  <td>{c.median ? usd(c.median) : '—'}</td>
-                  <td>{c.top ? usd(c.top) : '—'}</td>
-                </tr>
-              ))}
+              {CARDS.map((c) => {
+                const s = lastSoldFor(c.slug, sales)
+                return (
+                  <tr key={c.slug} className="border-t border-neutral-800 align-top">
+                    <td className="py-2.5 pr-3">
+                      <Link to={`/?card=${c.slug}`} className="font-medium text-white hover:underline">{c.character}</Link>
+                      <div className="text-xs text-neutral-500">{c.number}</div>
+                    </td>
+                    <td className="py-2.5 pr-3"><SaleCell row={s.raw} /></td>
+                    <td className="py-2.5 pr-3"><SaleCell row={s.graded} showGrade /></td>
+                    <td className="py-2.5 pr-3"><SaleCell row={s.top} showGrade /></td>
+                    <td className="py-2.5 text-right font-mono text-neutral-400">{s.count}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
-        <Chart data={perCard.map((c) => ({ name: c.name, value: c.found }))} />
       </Panel>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Panel title="Price distribution"><Chart data={priceDist} /></Panel>
-        <Panel title="Grading services"><Chart data={companies} /></Panel>
-        <Panel title="Discoveries by month"><Chart data={timeline} /></Panel>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Panel title="Top finders">
-          <List items={finders.map((f) => ({ key: f.name, left: f.name, right: `${f.value} card${f.value > 1 ? 's' : ''}` }))} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <Panel
+          title="Recent sales"
+          action={
+            <div className="flex rounded-md border border-neutral-800 p-0.5 text-xs" role="group" aria-label="Condition">
+              {CONDITIONS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setCondition(c.value)}
+                  aria-pressed={condition === c.value}
+                  className={`rounded px-2.5 py-1 transition ${
+                    condition === c.value ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          }
+        >
+          <SalesChart rows={shown} />
+          {shown.length ? (
+            <ul className="mt-4 divide-y divide-neutral-800 text-sm">
+              {shown.slice(0, 25).map((r) => (
+                <li key={`${r.slot.card.slug}-${r.slot.serial}-${r.sale.date}-${r.sale.price}`} className="grid grid-cols-[88px_minmax(0,1fr)_auto_auto] items-center gap-3 py-2">
+                  <span className="font-mono text-xs text-neutral-500">{r.sale.date}</span>
+                  <Link to={`/card/${r.slot.card.slug}/${r.slot.serial}`} className="truncate text-neutral-200 hover:underline">
+                    {r.slot.card.character} #{pad(r.slot.serial)}
+                  </Link>
+                  <ConditionBadge row={r} />
+                  <span className="text-right font-mono text-white">
+                    {r.sale.url ? (
+                      <a href={r.sale.url} target="_blank" rel="noreferrer" className="hover:underline">{usd(r.sale.price)} ↗</a>
+                    ) : (
+                      usd(r.sale.price)
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-neutral-500">No {condition === 'all' ? '' : condition} sales recorded yet.</p>
+          )}
         </Panel>
-        <Panel title="Recent finds">
-          <List items={recent.map((s) => slotRow(s, s.copy!.foundDate))} />
-        </Panel>
-        <Panel title="Highest sales">
-          <List items={highest.map((s) => slotRow(s, usd(latestSale(s.copy)!.price)))} />
-        </Panel>
-      </div>
-    </div>
-  )
-}
 
-const slotRow = (s: Slot, right: string) => ({
-  key: s.card.slug + s.serial,
-  left: (
-    <Link to={`/card/${s.card.slug}/${s.serial}`} className="text-neutral-200 hover:underline">
-      {s.card.character} #{pad(s.serial)}
-    </Link>
-  ),
-  right,
-})
-
-function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-      <div className="text-xs text-neutral-500">{label}</div>
-      <div className="mt-1 font-mono text-2xl font-medium text-white">{value}</div>
-      <div className="text-xs text-neutral-400">{sub}</div>
-    </div>
-  )
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-      <h2 className="mb-3 text-sm font-bold text-neutral-400">{title}</h2>
-      {children}
-    </section>
-  )
-}
-
-function Chart({ data, colors }: { data: { name: string; value: number }[]; colors?: string[] }) {
-  if (!data.length) return <p className="text-sm text-neutral-500">No data yet.</p>
-  return (
-    <div className="mt-2 h-48">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ left: -20, right: 8 }}>
-          <CartesianGrid stroke="#ffffff10" vertical={false} />
-          <XAxis dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
-          <YAxis allowDecimals={false} tick={{ fill: '#a1a1aa', fontSize: 11 }} />
-          <Tooltip
-            cursor={{ fill: '#ffffff08' }}
-            contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8 }}
-          />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-            {data.map((d, i) => (
-              <Cell key={d.name} fill={colors?.[i] ?? '#e5e5e5'} />
+        <Panel title="Grading breakdown">
+          <p className="mb-4 text-xs text-neutral-500">
+            {graded} of {found.length} found copies are slabbed · {raw} raw
+          </p>
+          <div className="space-y-4">
+            {companies.map((c) => (
+              <div key={c.company}>
+                <div className="flex items-baseline justify-between text-sm">
+                  <span className="font-medium text-white">{c.company}</span>
+                  <span className="font-mono text-xs text-neutral-400">
+                    {c.copies} {c.copies === 1 ? 'copy' : 'copies'}
+                    {graded ? ` · ${Math.round((c.copies / graded) * 100)}%` : ''}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-neutral-800">
+                  <div className="h-full rounded-full bg-white" style={{ width: `${(c.copies / maxCompany) * 100}%` }} />
+                </div>
+                {c.grades.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {c.grades.map(([grade, n]) => (
+                      <span key={grade} className="rounded border border-neutral-800 px-1.5 py-0.5 font-mono text-[11px] text-neutral-300">
+                        {grade} <span className="text-neutral-500">×{n}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
-          </Bar>
-        </BarChart>
+          </div>
+        </Panel>
+      </div>
+    </div>
+  )
+}
+
+const saleCaption = (r: SaleRow) =>
+  `${r.slot.card.character} #${pad(r.slot.serial)}${r.sale.grade ? ` · ${r.sale.grade}` : ''} · ${r.sale.date}`
+
+function SaleCell({ row, showGrade = false }: { row?: SaleRow; showGrade?: boolean }) {
+  if (!row) return <span className="text-neutral-600">—</span>
+  return (
+    <div>
+      <div className="font-mono text-white">{usd(row.sale.price)}</div>
+      <div className="text-xs text-neutral-500">
+        <Link to={`/card/${row.slot.card.slug}/${row.slot.serial}`} className="hover:underline">#{pad(row.slot.serial)}</Link>
+        {showGrade && ` · ${row.sale.grade ?? 'Raw'}`} · {row.sale.date}
+      </div>
+    </div>
+  )
+}
+
+function ConditionBadge({ row }: { row: SaleRow }) {
+  return row.company ? (
+    <span className="rounded bg-white px-1.5 py-0.5 text-[11px] font-medium text-black">{row.sale.grade}</span>
+  ) : (
+    <span className="rounded border border-neutral-700 px-1.5 py-0.5 text-[11px] text-neutral-400">Raw</span>
+  )
+}
+
+/** Price vs. date: graded sales as white dots, raw sales as grey dots. */
+function SalesChart({ rows }: { rows: SaleRow[] }) {
+  if (rows.length < 2) return null
+  const point = (r: SaleRow) => ({
+    x: Date.parse(r.sale.date),
+    y: r.sale.price,
+    label: `${r.slot.card.character} #${pad(r.slot.serial)} · ${r.sale.grade ?? 'Raw'}`,
+  })
+  const rawPts = rows.filter((r) => !r.company).map(point)
+  const gradedPts = rows.filter((r) => r.company).map(point)
+  // Short date ranges get day-level labels ("Aug 4"), otherwise month + year ("Aug 25").
+  const times = [...rawPts, ...gradedPts].map((p) => p.x)
+  const shortRange = Math.max(...times) - Math.min(...times) < 120 * 86_400_000
+  const fmtDate = (t: number) =>
+    new Date(t).toLocaleDateString(
+      'en-US',
+      shortRange ? { month: 'short', day: 'numeric', timeZone: 'UTC' } : { month: 'short', year: '2-digit', timeZone: 'UTC' },
+    )
+
+  return (
+    <div className="h-56">
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <CartesianGrid stroke="#262626" />
+          <XAxis dataKey="x" type="number" domain={['dataMin', 'dataMax']} tickFormatter={fmtDate} tick={{ fill: '#737373', fontSize: 11 }} stroke="#404040" />
+          <YAxis dataKey="y" type="number" tickFormatter={(v: number) => `$${Math.round(v / 1000)}k`} tick={{ fill: '#737373', fontSize: 11 }} stroke="#404040" width={44} />
+          <Tooltip
+            cursor={{ stroke: '#404040' }}
+            content={({ payload }) => {
+              const p = payload?.[0]?.payload as ReturnType<typeof point> | undefined
+              if (!p) return null
+              return (
+                <div className="rounded-md border border-neutral-700 bg-neutral-900 px-2.5 py-1.5 text-xs">
+                  <div className="text-white">{usd(p.y)}</div>
+                  <div className="text-neutral-400">{p.label}</div>
+                  <div className="text-neutral-500">{new Date(p.x).toISOString().slice(0, 10)}</div>
+                </div>
+              )
+            }}
+          />
+          <Scatter name="Raw" data={rawPts} fill="#737373" />
+          <Scatter name="Graded" data={gradedPts} fill="#ffffff" />
+        </ScatterChart>
       </ResponsiveContainer>
     </div>
   )
 }
 
-function List({ items }: { items: { key: string; left: React.ReactNode; right: string }[] }) {
-  if (!items.length) return <p className="text-sm text-neutral-500">No data yet.</p>
+function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <ol className="space-y-1 text-sm">
-      {items.map((it, i) => (
-        <li key={it.key} className="flex justify-between gap-2">
-          <span className="truncate"><span className="text-neutral-500">{i + 1}.</span> {it.left}</span>
-          <span className="shrink-0 text-neutral-400">{it.right}</span>
-        </li>
-      ))}
-    </ol>
+    <div className="rounded-lg border border-neutral-800 p-4">
+      <div className="text-xs text-neutral-500">{label}</div>
+      <div className="mt-1 font-mono text-2xl font-medium text-white">{value}</div>
+      <div className="mt-0.5 truncate text-xs text-neutral-400">{sub}</div>
+    </div>
+  )
+}
+
+function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border border-neutral-800 p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="text-sm font-medium text-white">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
   )
 }

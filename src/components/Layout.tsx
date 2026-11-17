@@ -24,7 +24,7 @@ export default function Layout() {
           </Link>
           <nav className="flex gap-1">
             <NavLink to="/" end className={navCls}>
-              Binder
+              Tracker
             </NavLink>
             <NavLink to="/stats" className={navCls}>
               Stats

@@ -1,16 +1,12 @@
 import { SORT_LABELS, type FoundFilter, type SortKey } from '../lib/sortFilter'
 
-export type ViewMode = 'binder' | 'grid'
-
 interface Props {
   search: string
   filter: FoundFilter
   sort: SortKey
-  view: ViewMode
   onSearch: (v: string) => void
   onFilter: (v: FoundFilter) => void
   onSort: (v: SortKey) => void
-  onView: (v: ViewMode) => void
 }
 
 const field =
@@ -49,20 +45,6 @@ export default function Controls(p: Props) {
           </option>
         ))}
       </select>
-      <div className="flex rounded-md border border-neutral-800 p-0.5" role="group" aria-label="View">
-        {(['binder', 'grid'] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => p.onView(v)}
-            aria-pressed={p.view === v}
-            className={`rounded px-3 text-sm capitalize transition ${
-              p.view === v ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            {v === 'binder' ? 'Binder' : 'All 100'}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

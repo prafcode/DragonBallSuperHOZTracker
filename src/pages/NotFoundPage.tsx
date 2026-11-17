@@ -8,7 +8,7 @@ export default function NotFoundPage() {
       <p className="font-mono text-5xl text-white">404</p>
       <p className="mt-2 text-sm text-neutral-400">This page went to Other World.</p>
       <Link to="/" className="mt-6 inline-block rounded-md bg-white px-4 py-2 text-sm font-medium text-black">
-        Back to the binder
+        Back to the tracker
       </Link>
     </div>
   )

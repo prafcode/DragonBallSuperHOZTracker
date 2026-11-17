@@ -42,8 +42,8 @@ function CopyDetail({ card, serial }: { card: CardInfo; serial: number }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between text-sm">
-        <Link to={`/?card=${card.slug}&page=${Math.ceil(serial / 9)}`} className="text-neutral-400 hover:text-white">
-          ← Back to binder
+        <Link to={`/?card=${card.slug}`} className="text-neutral-400 hover:text-white">
+          ← Back to tracker
         </Link>
         <div className="flex gap-2">
           <Link className="rounded-md border border-neutral-800 px-3 py-1 font-mono text-neutral-300 hover:border-neutral-500" to={`/card/${card.slug}/${prev}`}>
